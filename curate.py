@@ -317,16 +317,17 @@ def render(picks, overview, since, warnings) -> tuple[str, str]:
 
 def send(subject: str, body: str) -> None:
     user, password = os.environ["SMTP_USER"], os.environ["SMTP_PASS"]
-    to = os.environ.get("MAIL_TO", user)
+    # MAIL_TO may be one address or a comma-separated list.
+    to = [a.strip() for a in os.environ.get("MAIL_TO", user).split(",") if a.strip()]
     msg = MIMEText(body, "html", "utf-8")
     msg["Subject"] = subject
     msg["From"] = formataddr(("AI Curator", user))
-    msg["To"] = to
+    msg["To"] = ", ".join(to)
     with smtplib.SMTP(os.environ["SMTP_HOST"], int(os.environ.get("SMTP_PORT", 587)), timeout=TIMEOUT) as server:
         server.starttls()
         server.login(user, password)
-        server.send_message(msg)
-    print(f"sent to {to}")
+        server.sendmail(user, to, msg.as_string())
+    print(f"sent to {len(to)} recipient(s)")
 
 
 # --------------------------------------------------------------------------- #

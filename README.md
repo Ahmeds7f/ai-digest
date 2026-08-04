@@ -38,7 +38,7 @@ python curate.py --dry-run    # real curation, writes digest.html, no email
    | `SMTP_PORT` | `587` |
    | `SMTP_USER` | your gmail address |
    | `SMTP_PASS` | the app password from step 2 |
-   | `MAIL_TO` | where the digest lands |
+   | `MAIL_TO` | where the digest lands — one address, or several comma-separated |
 
 4. Actions tab → *Weekly AI digest* → **Run workflow**. Confirm the email, then
    forget about it.
