@@ -64,6 +64,10 @@ arguing about, which labs and startups are moving. Weight toward:
   alternatives, efficiency breakthroughs, scaling insights, post-training
   and reasoning techniques
 - genuinely new research ideas and surprising emergent abilities
+- major incidents and industry drama: security mishaps and breaches (e.g. a
+  lab accidentally accessing another company's systems), leaks, lab
+  controversies, high-profile departures — the stories people in AI will
+  actually be talking about this week
 - occasionally interpretability/safety or policy, when it's a big story —
   but this should not dominate the picks
 
