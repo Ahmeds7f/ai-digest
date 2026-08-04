@@ -35,10 +35,13 @@ CANDIDATES = [
     ("MIT Tech Review", "https://www.technologyreview.com/topic/artificial-intelligence/feed/", 6),
     ("TechCrunch AI", "https://techcrunch.com/category/artificial-intelligence/feed/", 6),
     ("The Verge AI", "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml", 6),
-    # Safety / research
+    # Research
     ("Alignment Forum", "https://www.alignmentforum.org/feed.xml", 6),
     ("MarkTechPost", "https://www.marktechpost.com/feed/", 6),
     ("arXiv cs.AI", "https://rss.arxiv.org/rss/cs.AI", 10),
+    ("arXiv cs.LG", "https://rss.arxiv.org/rss/cs.LG", 10),
+    # Capability trends / AGI progress
+    ("Epoch AI", google_news("Epoch AI research trends"), 3),
 ]
 
 # The 6th link. Newest item from this feed goes in as-is.
@@ -47,13 +50,24 @@ OVERVIEW = ("Import AI (Jack Clark)", "https://importai.substack.com/feed")
 # Fed to the curator so its picks skew toward what's useful to you specifically.
 # Rewrite this in your own words - it's the highest-leverage knob in the repo.
 READER_PROFILE = """\
-MIT undergrad, CS + math. Does ML research in a physics lab and is in an AI
-safety fellowship. Comfortable with papers and technical detail.
+MIT undergrad, CS + math. Does ML research in a physics lab. Comfortable with
+papers and technical detail.
 
-Wants to hold his own in conversation with people deep in AI: what shipped,
-what the field is arguing about, which labs and startups are moving. Weight
-toward frontier model releases, interpretability and safety, and genuinely
-new research ideas. Skip: consumer app roundups, funding news with no
-strategic angle, "10 prompts that will change your life" content, and
-anything that's just a rehash of last week.\
+Wants a broad picture of where AI is headed and to hold his own in
+conversation with people deep in the field: what shipped, what the field is
+arguing about, which labs and startups are moving. Weight toward:
+- frontier model releases and what new capabilities they demonstrate —
+  especially evidence models have reached a new level (benchmark leaps,
+  tasks that went from impossible to solved, progress toward AGI and how
+  researchers are characterizing it)
+- architecture and training advances: new model architectures, attention
+  alternatives, efficiency breakthroughs, scaling insights, post-training
+  and reasoning techniques
+- genuinely new research ideas and surprising emergent abilities
+- occasionally interpretability/safety or policy, when it's a big story —
+  but this should not dominate the picks
+
+Skip: consumer app roundups, funding news with no strategic angle, "10
+prompts that will change your life" content, and anything that's just a
+rehash of last week.\
 """
