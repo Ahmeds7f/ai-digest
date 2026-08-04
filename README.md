@@ -71,4 +71,8 @@ the model, so it's predictable. Swap it for any weekly publication.
 
 ## Cost
 
-One API call a week with web search enabled — a few cents a month.
+One curation run a week with web search enabled — roughly $0.40 per run,
+~$1.70/month. Web search is the expensive part (each search re-processes the
+growing context). To cut costs: lower `max_uses` on the web search tool in
+`curate.py`, add `output_config={"effort": "medium"}` to the API call, or
+drop the search tool entirely (~$0.15/month, feed pool only).
