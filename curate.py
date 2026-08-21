@@ -185,7 +185,7 @@ def curate(pool: list[dict], days: int) -> list[dict]:
         for _ in range(1 + MAX_PAUSE_RESUMES):
             response = client.messages.create(
                 model=MODEL,
-                max_tokens=8000,
+                max_tokens=16000,
                 messages=messages,
                 tools=[
                     {"type": "web_search_20260209", "name": "web_search", "max_uses": 8}
@@ -208,17 +208,40 @@ def curate(pool: list[dict], days: int) -> list[dict]:
     text = "".join(
         block.text for block in response.content if block.type == "text"
     )
-    # The model may narrate around the JSON despite instructions; take the braces.
+    picks = parse_picks(text)
+    if not picks:
+        # A silent fallback costs a whole week, so log what actually came back.
+        print(f"curation unusable (stop_reason={response.stop_reason}, "
+              f"{len(text)} chars) — falling back")
+        print(f"  head: {text[:200]!r}")
+    return picks
+
+
+def parse_picks(text: str) -> list[dict]:
+    """
+    Pull the picks out of the response. The model may narrate around the JSON
+    despite instructions, so take the braces first; if that fails, scavenge
+    complete {...} objects out of a truncated array — a turn that ran out of
+    tokens mid-JSON still has three good picks in it.
+    """
     match = re.search(r"\{.*\}", text, re.S)
-    if not match:
-        print("no JSON in response — falling back")
-        return []
-    try:
-        picks = json.loads(match.group(0)).get("picks", [])
-    except json.JSONDecodeError:
-        print("unparseable JSON — falling back")
-        return []
-    return [p for p in picks if p.get("url") and p.get("title")]
+    if match:
+        try:
+            picks = json.loads(match.group(0)).get("picks", [])
+            return [p for p in picks if p.get("url") and p.get("title")]
+        except json.JSONDecodeError:
+            pass
+    salvaged = []
+    for chunk in re.findall(r"\{[^{}]*\}", text, re.S):
+        try:
+            pick = json.loads(chunk)
+        except json.JSONDecodeError:
+            continue
+        if pick.get("url") and pick.get("title"):
+            salvaged.append(pick)
+    if salvaged:
+        print(f"salvaged {len(salvaged)} picks from a truncated response")
+    return salvaged
 
 
 def url_alive(url: str) -> bool:
@@ -276,6 +299,8 @@ li:before{counter-increment:pick;content:counter(pick);position:absolute;left:0;
 a{color:#1a1a18;text-decoration:none;font-weight:600;font-size:16px}
 a:hover{text-decoration:underline}
 .why{font-size:14px;color:#4a4842;margin:3px 0 0}
+.degraded{font-size:13px;color:#8a5a2b;background:#faf3e8;border-radius:6px;
+          padding:10px 12px;margin:0 0 18px}
 .src{font-size:12px;color:#a3a099;margin:2px 0 0}
 .over{margin-top:26px;padding:16px 18px;background:#f7f6f1;border-radius:8px;
       border-left:3px solid #c9b98a}
@@ -286,14 +311,20 @@ a:hover{text-decoration:underline}
 """
 
 
-def render(picks, overview, since, warnings) -> tuple[str, str]:
+def render(picks, overview, since, warnings, degraded=False) -> tuple[str, str]:
     today = dt.datetime.now(dt.timezone.utc)
     subject = f"AI this week — {today:%b %d}"
     parts = [
         f"<html><head><meta charset='utf-8'><style>{CSS}</style></head>",
         "<body><div class='wrap'><h1>AI this week</h1>",
-        f"<p class='date'>{since:%b %d} &ndash; {today:%b %d} &middot; {len(picks)} picks</p><ol>",
+        f"<p class='date'>{since:%b %d} &ndash; {today:%b %d} &middot; {len(picks)} picks</p>",
     ]
+    if degraded:
+        parts.append(
+            "<p class='degraded'>Curation failed this week &mdash; these are just the "
+            "newest items in the pool, unranked and unexplained. Check the Actions log.</p>"
+        )
+    parts.append("<ol>")
     for pick in picks:
         parts.append(
             f"<li><a href='{html.escape(pick['url'], quote=True)}'>"
@@ -371,9 +402,10 @@ def main() -> int:
     overview_key = canonical(overview["url"]) if overview else None
     pool = [item for item in pool if canonical(item["url"]) != overview_key]
 
-    picks = [p for p in curate(pool, args.days) if canonical(p["url"]) != overview_key]
+    curated = curate(pool, args.days)
+    picks = [p for p in curated if canonical(p["url"]) != overview_key]
     picks = backfill(verify(picks), pool)
-    subject, body = render(picks, overview, since, warnings)
+    subject, body = render(picks, overview, since, warnings, degraded=not curated)
 
     with open("digest.html", "w", encoding="utf-8") as fh:
         fh.write(body)
